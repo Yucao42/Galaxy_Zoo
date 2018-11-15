@@ -7,8 +7,8 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 from datetime import datetime as dt
-import numpy as np
 
+from IPython import embed
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GTSRB example')
 parser.add_argument('--name', type=str, default='experiment', metavar='NM',
@@ -43,19 +43,22 @@ torch.manual_seed(args.seed)
 
 ### Data Initialization and Loading
 from data import initialize_data, data_transforms, val_transforms # data.py in the same folder
-from galaxy import GalaxyZooDataset
-from torch.utils.data import DataLoader
+initialize_data(args.data) # extracts the zip files, makes a validation set
 
-train_data = GalaxyZooDataset(train=True, transform=data_transforms)
-train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True,
-                                  num_workers=8, pin_memory=True, collate_fn=train_data.collate)
+train_loader = torch.utils.data.DataLoader(
+    datasets.ImageFolder(args.data + '/train_images',
+                         transform=data_transforms),
+    batch_size=args.batch_size, shuffle=True, num_workers=4)
+val_loader = torch.utils.data.DataLoader(
+    datasets.ImageFolder(args.data + '/val_images',
+                         transform=val_transforms),
+    batch_size=args.batch_size, shuffle=False, num_workers=8)
 
 ### Neural Network and Optimizer
 # We define neural net in model.py so that it can be reused by the evaluate.py script
 #from model_dnn import Net
 from paper_2stn import Net
-from nets import resnet
-model = resnet.resnet50(True)
+model = Net(args.no_dp, p = args.p)
 device = torch.device('cuda:0')
 
 if args.load:
@@ -68,38 +71,55 @@ if args.load:
 model.to(device)
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay = args.weight_decay)
 scheduler = optim.lr_scheduler.StepLR(optimizer, args.step)
-least_mse = np.inf
+best_accu = 0
 
 def train(epoch):
     model.train()
     correct = 0
-    loss_total = 0
-    loss_step  = 0
-    for batch_idx, meta in enumerate(train_loader):
-        data, target = meta['image'].to(device), meta['prob'].to(device)
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
         data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.mse_loss(output, target)
+        pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+        loss = F.nll_loss(output, target)
         loss.backward()
         optimizer.step()
-        loss_total += float(loss.data[0])
-        loss_step  += float(loss.data[0])
+        correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
-        if batch_idx % args.log_interval == 0 and batch_idx != 0:
-            print(dt.now(), 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} '.format(
+        #scheduler.step()
+        if batch_idx % args.log_interval == 0:
+            print(dt.now(), 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}, Accuracy: {}/{} '.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss_step / (args.log_interval * len(data)) ))
-            loss_step = 0
+                100. * batch_idx / len(train_loader), loss.data[0], correct, args.log_interval * len(data)),'({:.2f}%)'.format( float(100.00) * int(correct) * 1.0 / float(args.log_interval * len(data) )) )
+            correct = 0;
 
-    print("\nTraining MSE loss: ", loss_total * 1.0 / len(train_loader))
-    return loss_total * 1.0 / len(train_loader)       
+def validation():
+    model.eval()
+    validation_loss = 0
+    correct = 0
+    for data, target in val_loader:
+        data, target = data.to(device), target.to(device)
+        data, target = Variable(data), Variable(target)
+        data, target = Variable(data, volatile=True), Variable(target)
+        output = model(data)
+        validation_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
+        pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+        correct += pred.eq(target.data.view_as(pred)).cpu().sum()
+
+    validation_loss /= len(val_loader.dataset)
+    print(dt.now(), '\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
+        validation_loss, correct, len(val_loader.dataset),
+        100. * int(correct) / len(val_loader.dataset)))
+
+    return 100. * int(correct) / len(val_loader.dataset)
 
 for epoch in range(1, args.epochs + 1):
-    loss = train(epoch)
+    train(epoch)
+    accu = validation()
     scheduler.step()
-    model_file = "models/resnet/" + args.name +'/model_' + str(epoch) +'_{:.9f}'.format(loss) + '.pth'
-    if loss < least_mse :
-        least_mse = loss
+    model_file = "models/" + args.name +'/model_' + str(epoch) +'_{:.2f}'.format(accu) + '.pth'
+    if accu > best_accu and accu > 98:
+        best_accu = accu
         torch.save(model.state_dict(), model_file)
-        print('\nSaved model to ' + model_file )
+        print('\nSaved model to ' + model_file + '. You can run `python evaluate.py ' + model_file + '` to generate the Kaggle formatted csv file')

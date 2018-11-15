@@ -1,16 +1,16 @@
 set -x
-MODEL="2stn_2bn_0.5dp_0.9moment"
+MODEL="resnet50"
 
-mkdir -p models/${MODEL}
+mkdir -p models/resnet/${MODEL}
 #cp shell/train.sh models/${MODEL}/
 
 python3 main.py  \
 --name ${MODEL}  \
 --batch_size 32  \
---step 14 \
---epochs 60 \
+--step 15 \
+--epochs 40 \
 --lr 1e-3  \
 --p 0.25  \
 --weight_decay 1e-3  \
 --momentum 0.9  \
-2>&1 | tee models/${MODEL}/${MODEL}_training_50_finetune.report 
+2>&1 | tee models/resnet/${MODEL}/${MODEL}_training_50_finetune.report 

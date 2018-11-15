@@ -3,6 +3,8 @@ data
 models/*
 shits/*
 wrongs/*
+results/*
+
 shits
 wrongs
 hpc_outputs

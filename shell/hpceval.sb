@@ -11,7 +11,7 @@
 #SBATCH --error=hpc_outputs/slurm_%j.err 
 #SBATCH --gres=gpu:1
 
-cd /home/yc3390/project/galaxy/code/galaxy_stn
+cd /home/yc3390/project/galaxy/code/galaxy_res
 module purge
 
 source activate galaxy1
