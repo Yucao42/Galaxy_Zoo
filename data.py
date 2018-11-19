@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 data_transforms = transforms.Compose([
 
     #transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-    transforms.RandomAffine(degrees=25, translate=(0.2, 0.2), scale=(0.9, 1.1)),
+    transforms.RandomAffine(degrees=360, translate=(0.2, 0.2), scale=(0.9, 1.1)),
     #transforms.RandomResizedCrop(48, ratio=(0.8, 1.25)),
 
     transforms.RandomResizedCrop(48, scale=(0.9, 1), ratio=(0.8, 1.25)),

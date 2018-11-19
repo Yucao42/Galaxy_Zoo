@@ -1,6 +1,6 @@
 set -x
-MODEL="2stn_2bn_0.5dp_0.9moment"
+MODEL="stn2_360"
 
 python3 eval.py  \
---name ${MODEL}  \
---load  models/${MODEL}/model_51*
+--name ${MODEL}_6  \
+--load  models/${MODEL}/model_42*
