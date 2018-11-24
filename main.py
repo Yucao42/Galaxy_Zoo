@@ -11,7 +11,7 @@ import numpy as np
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GTSRB example')
-parser.add_argument('--name', type=str, default='experiment', metavar='NM',
+parser.add_argument('--name', type=str, default='resnet50', metavar='NM',
                     help="name of the training")
 parser.add_argument('--load', type=str,
                     help="load previous model to finetune")
@@ -55,10 +55,24 @@ train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True,
 #from model_dnn import Net
 from paper_2stn import Net
 from nets import resnet
-model = resnet.resnet50(True)
+from nets import vgg
+from nets import alexnet
+
+if 'resnet50' in args.name:
+    model = resnet.resnet50(True)
+elif 'resnet101' in args.name:
+    model = resnet.resnet101(True)
+elif 'vgg16_bn' in args.name:
+    model = vgg.vgg16_bn(True)
+elif 'alex' in args.name:
+    model = alexnet(True)
+else:
+    model = resnet.resnet152(True)
+
 device = torch.device('cuda:0')
 
 if args.load:
+    model.load_state_dict(torch.load(args.load))
     try:    
         model.load_state_dict(torch.load(args.load))
         print("Load sucessfully !", args.load)

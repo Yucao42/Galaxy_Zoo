@@ -1,6 +1,6 @@
 set -x
-MODEL="resnet50_180"
+MODEL="resnet50_360aug_finetune"
 
 python3 eval.py  \
 --name ${MODEL}  \
---load  models/resnet/${MODEL}/model_39*
+--load  models/resnet/${MODEL}/model_16*

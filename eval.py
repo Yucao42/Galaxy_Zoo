@@ -23,7 +23,7 @@ from galaxy import GalaxyZooDataset
 from torch.utils.data import DataLoader
 
 val_data = GalaxyZooDataset(train=False, transform=val_transforms)
-val_loader = DataLoader(val_data, batch_size=32, shuffle=False,
+val_loader = DataLoader(val_data, batch_size=16, shuffle=False,
                                   num_workers=8, pin_memory=True, collate_fn=val_data.collate)
 
 ### Neural Network and Optimizer
@@ -31,7 +31,20 @@ val_loader = DataLoader(val_data, batch_size=32, shuffle=False,
 #from model_dnn import Net
 from paper_2stn import Net
 from nets import resnet
-model = resnet.resnet50(False)
+from nets import vgg
+from nets import alexnet
+
+if 'resnet50' in args.name:
+    model = resnet.resnet50()
+elif 'resnet101' in args.name:
+    model = resnet.resnet101()
+elif 'vgg16_bn' in args.name:
+    model = vgg.vgg16_bn()
+elif 'alex' in args.name:
+    model = alexnet()
+else:
+    model = resnet.resnet152()
+
 device = torch.device('cuda:0')
 
 if args.load:

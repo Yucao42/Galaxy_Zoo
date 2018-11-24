@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 import torch.utils.model_zoo as model_zoo
 
 
@@ -12,7 +13,7 @@ model_urls = {
 
 class AlexNet(nn.Module):
 
-    def __init__(self, num_classes=43):
+    def __init__(self, num_classes=37):
         super(AlexNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
@@ -43,11 +44,13 @@ class AlexNet(nn.Module):
         x = self.features(x)
         x = x.view(x.size(0), 256 * 6 * 6)
         x = self.classifier(x)
+
+        x = torch.clamp(x, 0, 1)
         return x
 
 
 def alexnet(pretrained=False, **kwargs):
-    r"""AlexNet model architecture from the
+    """AlexNet model architecture from the
     `"One weird trick..." <https://arxiv.org/abs/1404.5997>`_ paper.
 
     Args:

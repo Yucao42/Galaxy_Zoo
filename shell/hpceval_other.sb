@@ -15,4 +15,4 @@ cd /home/yc3390/project/galaxy/code/galaxy_res
 module purge
 
 source activate galaxy1
-bash shell/eval.sh
+bash shell/eval_vgg.sh

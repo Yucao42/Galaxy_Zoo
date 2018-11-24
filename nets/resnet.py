@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import torch.nn.functional as F
+import torch
 
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
@@ -153,6 +154,7 @@ class ResNet(nn.Module):
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
 
+        x = torch.clamp(x, 0, 1)
         return x
 
 
@@ -227,13 +229,6 @@ def resnet101(pretrained=False, **kwargs):
             model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
         except:
             print('Last dimension size mismatch!')
-            pretrained_file = '~/.torch/models/' + model_urls['resnet101'].strip[-1] 
-            for k,v in raw_dict.items():
-                if 'fc' in k:
-                    continue;
-                if isinstance(v, torch.nn.parameter.Parameter):
-                    v = v.data
-                    state_dict[k].copy_(v)
 
     return model
 
@@ -246,5 +241,9 @@ def resnet152(pretrained=False, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+        try:
+            model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+        except:
+            print('Last dimension size mismatch!')
+
     return model

@@ -9,10 +9,10 @@
 #SBATCH --mail-user=yc3390nyu.edu
 #SBATCH --output=hpc_outputs/slurm_%j.out
 #SBATCH --error=hpc_outputs/slurm_%j.err 
-#SBATCH --gres=gpu:p40:1
+#SBATCH --gres=gpu:v100:1
 
 cd /home/yc3390/project/galaxy/code/galaxy_res
 module purge
 
 source activate galaxy1
-bash shell/eval.sh
+bash shell/train_vgg.sh

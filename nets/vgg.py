@@ -23,7 +23,7 @@ model_urls = {
 
 class VGG(nn.Module):
 
-    def __init__(self, features, num_classes=1000, init_weights=True):
+    def __init__(self, features, num_classes=37, init_weights=True):
         super(VGG, self).__init__()
         self.features = features
         self.classifier = nn.Sequential(
@@ -148,7 +148,10 @@ def vgg16(pretrained=False, **kwargs):
         kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['D']), **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['vgg16']))
+        try:
+            model.load_state_dict(model_zoo.load_url(model_urls['vgg16']))
+        except:
+            print('Last dimension mismatch!')
     return model
 
 
@@ -162,7 +165,11 @@ def vgg16_bn(pretrained=False, **kwargs):
         kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['D'], batch_norm=True), **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['vgg16_bn']))
+        try:
+            model.load_state_dict(model_zoo.load_url(model_urls['vgg16_bn']))
+        except:
+            print('Last dimension mismatch!')
+
     return model
 
 
@@ -176,7 +183,10 @@ def vgg19(pretrained=False, **kwargs):
         kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['E']), **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['vgg19']))
+        try:
+            model.load_state_dict(model_zoo.load_url(model_urls['vgg19']))
+        except:
+            print('Last dimension mismatch!')
     return model
 
 

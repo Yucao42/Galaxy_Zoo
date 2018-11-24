@@ -1,5 +1,5 @@
 set -x
-MODEL="resnet152"
+MODEL="alex"
 
 mkdir -p models/resnet/${MODEL}
 #cp shell/train.sh models/${MODEL}/
@@ -9,7 +9,7 @@ python3 main.py  \
 --batch_size 64 \
 --step 15 \
 --epochs 40 \
---lr 4e-2  \
+--lr 2e-2  \
 --p 0.5  \
 --weight_decay 5e-4  \
 --momentum 0.9  \
