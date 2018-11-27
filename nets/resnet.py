@@ -96,7 +96,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5):
+    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False):
         self.inplanes = 64
         self.dp = dp
         super(ResNet, self).__init__()
@@ -119,6 +119,9 @@ class ResNet(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
+                if(lock_bn):
+                    m.weight.requires_grad= False
+                    m.bias.requires_grad  = False
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None

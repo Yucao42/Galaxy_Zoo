@@ -19,6 +19,8 @@ parser.add_argument('--data', type=str, default='data', metavar='D',
                     help="folder where data is located. train_data.zip and test_data.zip need to be found in the folder")
 parser.add_argument('--no_dp', action='store_true', default=False,
                     help="if there is no dropout")
+parser.add_argument('--lock_bn', action='store_true', default=False,
+                    help="if there is no dropout")
 parser.add_argument('--batch_size', type=int, default=64, metavar='B',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--step', type=int, default=10, metavar='S', 
@@ -59,7 +61,7 @@ from nets import vgg
 from nets import alexnet
 
 if 'resnet50' in args.name:
-    model = resnet.resnet50(True)
+    model = resnet.resnet50(True, lock_bn=args.lock_bn)
 elif 'resnet101' in args.name:
     model = resnet.resnet101(True)
 elif 'vgg16_bn' in args.name:
