@@ -22,6 +22,14 @@ def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
 
+def partial_nll(scores, target):
+    '''First 3 answers sums up to 1, use a negative log likelihood loss to correct it further.
+    '''
+    epi = 1e-12
+    probs = scores[:, :3] 
+    #probs = scores[:, :3] / (socres[:, :3].sum(dim=1) + epi)
+    g_t = target[:, :3]
+    return F.nll_loss(probs, g_t) 
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -96,7 +104,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False):
+    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False, sigmoid=False):
         self.inplanes = 64
         self.dp = dp
         super(ResNet, self).__init__()
@@ -112,6 +120,8 @@ class ResNet(nn.Module):
         self.avgpool = nn.AvgPool2d(7, stride=1)
         self.fc1 = nn.Linear(512 * block.expansion, mid_layer)
         self.fc2 = nn.Linear(mid_layer, num_classes)
+        self.score = nn.Sigmoid()
+        self.sigmoid = sigmoid
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -157,7 +167,10 @@ class ResNet(nn.Module):
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
 
-        x = torch.clamp(x, 0, 1)
+        if self.sigmoid:
+            x = self.score(x)
+        else:
+            x = torch.clamp(x, 0, 1)
         return x
 
 

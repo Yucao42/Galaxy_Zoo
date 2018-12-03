@@ -8,6 +8,7 @@ from torchvision import datasets, transforms
 from torch.autograd import Variable
 from datetime import datetime as dt
 import numpy as np
+from nets.resnet import partial_nll
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GTSRB example')
@@ -20,7 +21,9 @@ parser.add_argument('--data', type=str, default='data', metavar='D',
 parser.add_argument('--no_dp', action='store_true', default=False,
                     help="if there is no dropout")
 parser.add_argument('--lock_bn', action='store_true', default=False,
-                    help="if there is no dropout")
+                    help="if there is no BN gradient")
+parser.add_argument('--sigmoid', action='store_true', default=False,
+                    help="if there is sigmoid")
 parser.add_argument('--batch_size', type=int, default=64, metavar='B',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--step', type=int, default=10, metavar='S', 
@@ -61,9 +64,13 @@ from nets import vgg
 from nets import alexnet
 
 if 'resnet50' in args.name:
-    model = resnet.resnet50(True, lock_bn=args.lock_bn)
+    model = resnet.resnet50(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid)
 elif 'resnet101' in args.name:
     model = resnet.resnet101(True)
+elif 'resnet18' in args.name:
+    model = resnet.resnet18(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid)
+elif 'resnet34' in args.name:
+    model = resnet.resnet34(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid)
 elif 'vgg16_bn' in args.name:
     model = vgg.vgg16_bn(True)
 elif 'alex' in args.name:
@@ -86,6 +93,11 @@ optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, we
 scheduler = optim.lr_scheduler.StepLR(optimizer, args.step)
 least_mse = np.inf
 
+kl_func = nn.KLDivLoss()
+epi = 1e-9
+
+use_kl = False
+
 def train(epoch):
     model.train()
     correct = 0
@@ -96,7 +108,15 @@ def train(epoch):
         data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.mse_loss(output, target)
+        if not  use_kl:
+            loss = F.mse_loss(output, target)
+        else:
+            prob = output[:, :3] / (output[:, :3].sum(dim=1).reshape(-1, 1) + epi)
+            p_gt = target[:, :3] / (target[:, :3].sum(dim=1).reshape(-1, 1) + epi)
+            prob[prob==0] = 1e-9
+            p_gt[p_gt==0] = 1e-9
+            loss = F.mse_loss(output, target) + 0.1 * kl_func(prob.log().float(), p_gt)
+        #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
         loss.backward()
         optimizer.step()
         loss_total += float(loss.data[0])
@@ -114,7 +134,8 @@ def train(epoch):
 for epoch in range(1, args.epochs + 1):
     loss = train(epoch)
     scheduler.step()
-    model_file = "models/resnet/" + args.name +'/model_' + str(epoch) +'_{:.9f}'.format(loss) + '.pth'
+    model_file = "models/resnet/" + args.name +'/model_best.pth'
+    #model_file = "models/resnet/" + args.name +'/model_' + str(epoch) +'_{:.9f}'.format(loss) + '.pth'
     if loss < least_mse :
         least_mse = loss
         torch.save(model.state_dict(), model_file)

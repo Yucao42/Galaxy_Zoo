@@ -1,5 +1,5 @@
 set -x
-MODEL="resnet50_500"
+MODEL="resnet18_222"
 
 mkdir -p models/resnet/${MODEL}
 #cp shell/train.sh models/${MODEL}/
