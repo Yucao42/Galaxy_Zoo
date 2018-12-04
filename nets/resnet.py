@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import torch.nn.functional as F
 import torch
-
+from custom import OptimisedDivGalaxyOutputLayer 
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
@@ -104,8 +104,9 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False, sigmoid=False):
+    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False, sigmoid=False, optimized=False):
         self.inplanes = 64
+        self.optimized = optimized
         self.dp = dp
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
@@ -122,6 +123,7 @@ class ResNet(nn.Module):
         self.fc2 = nn.Linear(mid_layer, num_classes)
         self.score = nn.Sigmoid()
         self.sigmoid = sigmoid
+        self.optimized_output = OptimisedDivGalaxyOutputLayer() 
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -167,7 +169,10 @@ class ResNet(nn.Module):
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
 
-        if self.sigmoid:
+        if self.optimized:
+            x = self.relu(x)
+            x = self.optimized_output.predictions(x) 
+        elif self.sigmoid:
             x = self.score(x)
         else:
             x = torch.clamp(x, 0, 1)
@@ -180,7 +185,7 @@ def resnet18(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], dp=0.1,  **kwargs)
     if pretrained:
         try:
             model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
@@ -196,7 +201,7 @@ def resnet34(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
+    model = ResNet(BasicBlock, [3, 4, 6, 3], dp=0.2, **kwargs)
     if pretrained:
         try:
             model.load_state_dict(model_zoo.load_url(model_urls['resnet34']))

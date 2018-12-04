@@ -24,6 +24,8 @@ parser.add_argument('--lock_bn', action='store_true', default=False,
                     help="if there is no BN gradient")
 parser.add_argument('--sigmoid', action='store_true', default=False,
                     help="if there is sigmoid")
+parser.add_argument('--optimized', action='store_true', default=False,
+                    help="if there optimized normalization")
 parser.add_argument('--batch_size', type=int, default=64, metavar='B',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--step', type=int, default=10, metavar='S', 
@@ -64,7 +66,7 @@ from nets import vgg
 from nets import alexnet
 
 if 'resnet50' in args.name:
-    model = resnet.resnet50(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid)
+    model = resnet.resnet50(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid, optimized=args.optimized)
 elif 'resnet101' in args.name:
     model = resnet.resnet101(True)
 elif 'resnet18' in args.name:

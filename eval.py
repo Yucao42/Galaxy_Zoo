@@ -13,6 +13,7 @@ import numpy as np
 parser = argparse.ArgumentParser(description='Galaxy ZOO')
 parser.add_argument('--name', type=str, default='resnet50.csv')
 parser.add_argument('--load', type=str)
+parser.add_argument('--optimized', action="store_true", default=False)
 
 args = parser.parse_args()
 print(args)
@@ -35,7 +36,7 @@ from nets import vgg
 from nets import alexnet
 
 if 'resnet50' in args.name:
-    model = resnet.resnet50()
+    model = resnet.resnet50(optimized=args.optimized)
 elif 'resnet101' in args.name:
     model = resnet.resnet101()
 elif 'vgg16_bn' in args.name:
