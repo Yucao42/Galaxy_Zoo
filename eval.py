@@ -13,7 +13,7 @@ import numpy as np
 parser = argparse.ArgumentParser(description='Galaxy ZOO')
 parser.add_argument('--name', type=str, default='resnet50.csv')
 parser.add_argument('--load', type=str)
-parser.add_argument('--optimized', action="store_true", default=False)
+parser.add_argument('--optimized', action="store_true", default=True)
 
 args = parser.parse_args()
 print(args)
@@ -24,8 +24,8 @@ from galaxy import GalaxyZooDataset
 from torch.utils.data import DataLoader
 
 val_data = GalaxyZooDataset(train=False, transform=val_transforms)
-val_loader = DataLoader(val_data, batch_size=16, shuffle=False,
-                                  num_workers=8, pin_memory=True, collate_fn=val_data.collate)
+val_loader = DataLoader(val_data, batch_size=4, shuffle=False,
+                                  num_workers=4, pin_memory=True, collate_fn=val_data.collate)
 
 ### Neural Network and Optimizer
 # We define neural net in model.py so that it can be reused by the evaluate.py script
@@ -64,7 +64,8 @@ def validation():
         data = meta['image'].to(device)
         names = meta['name']
         data = Variable(data, volatile=True)
-        output = torch.clamp(model(data), 0, 1)
+        output = model(data)
+
         for i in range(len(names)):
             name = names[i]
             strs = "{}".format(int(name))

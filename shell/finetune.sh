@@ -1,5 +1,5 @@
 set -x
-MODEL="resnet50_1111"
+MODEL="resnet50_normalized_1111"
 
 mkdir -p models/resnet/${MODEL}_finetune5111
 #cp shell/train.sh models/${MODEL}/
@@ -14,5 +14,5 @@ python3 main.py  \
 --weight_decay 5e-4  \
 --optimized \
 --momentum 0.9  \
---load models/resnet/${MODEL}_finetune1/model_36* \
+--load models/resnet/${MODEL}/model_best.pth \
 2>&1 | tee models/resnet/${MODEL}_finetune5111/${MODEL}_training_50_finetune.report 

@@ -1,5 +1,5 @@
 set -x
-MODEL="resnet50_normalized_1111"
+MODEL="resnet50_normalized_1111_5e-2lr"
 
 mkdir -p models/resnet/${MODEL}
 #cp shell/train.sh models/${MODEL}/
@@ -7,9 +7,9 @@ mkdir -p models/resnet/${MODEL}
 python3 main.py  \
 --name ${MODEL}  \
 --batch_size 64 \
---step 30 \
---epochs 100 \
---lr 2e-2  \
+--step 14 \
+--epochs 70 \
+--lr 5e-2  \
 --p 0.5  \
 --weight_decay 5e-4  \
 --optimized \
