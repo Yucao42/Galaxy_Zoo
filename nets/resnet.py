@@ -167,6 +167,8 @@ class ResNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = F.dropout(x, p=self.dp, training=self.training)
         x = self.relu(self.fc1(x))
+        ### Double Dropout
+        #x = F.dropout(x, p=self.dp, training=self.training)
         x = self.fc2(x)
 
         if self.optimized:

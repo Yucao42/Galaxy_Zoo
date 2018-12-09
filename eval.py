@@ -24,7 +24,7 @@ from galaxy import GalaxyZooDataset
 from torch.utils.data import DataLoader
 
 val_data = GalaxyZooDataset(train=False, transform=val_transforms)
-val_loader = DataLoader(val_data, batch_size=4, shuffle=False,
+val_loader = DataLoader(val_data, batch_size=16, shuffle=False,
                                   num_workers=4, pin_memory=True, collate_fn=val_data.collate)
 
 ### Neural Network and Optimizer

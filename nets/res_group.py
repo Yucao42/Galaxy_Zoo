@@ -3,6 +3,8 @@ import torch.utils.model_zoo as model_zoo
 import torch.nn.functional as F
 import torch
 from custom import OptimisedDivGalaxyOutputLayer 
+from groupy.gconv.pytorch_gconv import P4MConvZ2, P4MConvP4M
+from groupy.gconv.pytorch_gconv.splitgconv2d import SplitGConv2D
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
