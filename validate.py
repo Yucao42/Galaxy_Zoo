@@ -24,7 +24,7 @@ from data import data_transforms, val_transforms # data.py in the same folder
 from galaxy import GalaxyZooDataset
 from torch.utils.data import DataLoader
 
-val_data = GalaxyZooDataset(train=False, transform=val_transforms)
+val_data = GalaxyZooDataset(train=True, transform=val_transforms)
 val_loader = DataLoader(val_data, batch_size=16, shuffle=False,
                                   num_workers=4, pin_memory=True, collate_fn=val_data.collate)
 
@@ -65,11 +65,16 @@ output_file.write(head)
 
 def validation():
     model.eval()
+    loss_total = 0
+    loss_step  = 0
     for meta in tqdm(val_loader):
         data = meta['image'].to(device)
+        target = Variable(meta['prob'].to(device))
         names = meta['name']
         data = Variable(data, volatile=True)
         output = model(data)
+        loss = F.mse_loss(output, target)
+        loss_total += float(loss.item())
 
         for i in range(len(names)):
             name = names[i]
@@ -79,7 +84,9 @@ def validation():
             #print(strs)
             output_file.write(strs + '\n')
 
-    print(dt.now(), 'Done. ')
+
+
+    print(dt.now(), 'Done. ', 'Avg loss: ', loss_total*1.0/len(val_loader))
 
 
 print(dt.now(),'Start.') 

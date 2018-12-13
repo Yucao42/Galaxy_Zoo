@@ -100,18 +100,27 @@ epi = 1e-9
 
 use_kl = False
 
+# Scale factor to the first question
+sf = 3
+
 def train(epoch):
     model.train()
     correct = 0
     loss_total = 0
+    loss_1 = 0
+    loss_2 = 0
     loss_step  = 0
     for batch_idx, meta in enumerate(train_loader):
         data, target = meta['image'].to(device), meta['prob'].to(device)
         data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
+        cls_res = output[:, :3]
+        cls_gts = target[:, :3]
         if not  use_kl:
-            loss = F.mse_loss(output, target)
+            loss_1 = sf * F.mse_loss(cls_gts, cls_res)
+            loss_2 =  F.mse_loss(output, target)
+            loss = loss_1 + loss_2
         else:
             prob = output[:, :3] / (output[:, :3].sum(dim=1).reshape(-1, 1) + epi)
             p_gt = target[:, :3] / (target[:, :3].sum(dim=1).reshape(-1, 1) + epi)
@@ -121,16 +130,16 @@ def train(epoch):
         #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
         loss.backward()
         optimizer.step()
-        loss_total += float(loss.data[0])
-        loss_step  += float(loss.data[0])
+        loss_total += float(loss_2.item())
+        loss_step  += float(loss.item())
 
         if batch_idx % args.log_interval == 0 and batch_idx != 0:
             print(dt.now(), 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} '.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss_step / (args.log_interval * len(data)) ))
+                100. * batch_idx / len(train_loader), loss_step / (args.log_interval ) ))
             loss_step = 0
 
-    print("\nTraining MSE loss: ", loss_total * 1.0 / len(train_loader))
+    print("\nTraining MSE loss: ", np.sqrt(loss_total * 1.0 / len(train_loader)))
     return loss_total * 1.0 / len(train_loader)       
 
 for epoch in range(1, args.epochs + 1):

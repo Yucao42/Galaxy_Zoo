@@ -104,7 +104,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False, sigmoid=False, optimized=False):
+    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False, sigmoid=False, optimized=True):
         self.inplanes = 64
         self.optimized = optimized
         self.dp = dp
@@ -168,7 +168,7 @@ class ResNet(nn.Module):
         x = F.dropout(x, p=self.dp, training=self.training)
         x = self.relu(self.fc1(x))
         ### Double Dropout
-        #x = F.dropout(x, p=self.dp, training=self.training)
+        x = F.dropout(x, p=self.dp, training=self.training)
         x = self.fc2(x)
 
         if self.optimized:

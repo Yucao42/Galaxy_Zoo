@@ -13,9 +13,9 @@ INPUTSIZE = (224, 224)
 
 class GalaxyZooDataset(data.Dataset):
     dataset_paths = {
-        'train_images': '/scratch/yc3390/project/galaxy/data/all/training_files_path.pkl',
-        'test_images' :  '/scratch/yc3390/project/galaxy/data/all/test_files_path.pkl',
-        'train_probs' :  '/scratch/yc3390/project/galaxy/data/all/training_solutions.pkl',
+        'train_images': '/home/yc3390/data/train.pkl',
+        'test_images' :  '/home/yc3390/data/test.pkl',
+        'train_probs' :  '/home/yc3390/data/training_solutions.pkl',
     }
 
     def __init__(self, train=True, transform=None):
