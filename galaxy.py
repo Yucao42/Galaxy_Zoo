@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import torch.utils.data as data
 from PIL import Image
+import torchvision
 from random import randint
 import math
 from torch.utils.data import DataLoader
@@ -83,6 +84,10 @@ class GalaxyZooDataset(data.Dataset):
             pic  = self.test_set[name]
             prob = torch.Tensor([0]) 
 
+            image = cv2.imread(pic)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = Image.fromarray(image)
+            image = self.transform(image)
         try:
             image = cv2.imread(pic)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -107,21 +112,23 @@ if __name__ == '__main__':
     train_transform = transforms.Compose([
                                     # transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
                                     # transforms.RandomResizedCrop(args.input_size),
-                                    transforms.Resize((224, 224)),
+                                    transforms.Resize(336),
                                     # transforms.RandomHorizontalFlip(),
-                                    transforms.ToTensor(),
+                                    transforms.TenCrop((224,224)),
+                                    torchvision.transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops]))
+                                    #transforms.ToTensor(),
                                     #transforms.Normalize(mean=imagenet_mean, std=imagenet_std)
                                     ])
 
     train_data = GalaxyZooDataset(train=False, transform=train_transform)
-    train_loader = DataLoader(train_data, batch_size=64, shuffle=False,
+    train_loader = DataLoader(train_data, batch_size=8, shuffle=False,
                                   num_workers=8, pin_memory=True, collate_fn=train_data.collate)
     import cv2
     print(len(train_loader))
     for batch_idx, meta in enumerate(train_loader):
         try:
             print('Nice a there is no error', meta['image'].shape, meta['prob'].shape, batch_idx)
-            print(meta['name'])
+            #print(meta['name'])
         except:
             print(meta['name'])
     print('Finished! ')
