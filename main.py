@@ -101,7 +101,7 @@ epi = 1e-9
 use_kl = False
 
 # Scale factor to the first question
-sf = 3
+sf = 1
 
 def train(epoch):
     model.train()
