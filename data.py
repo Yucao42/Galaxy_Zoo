@@ -9,8 +9,8 @@ import torchvision.transforms as transforms
 # and normalize them to mean = 0 and standard-deviation = 1 based on statistics collected from
 # the training set
 data_transforms = transforms.Compose([
-    # transforms.Scale(330),
-    transforms.CenterCrop(330),
+    #transforms.Scale(330),
+    #transforms.CenterCrop(330),
 
     #transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
     transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
@@ -19,7 +19,8 @@ data_transforms = transforms.Compose([
     transforms.RandomResizedCrop(224, scale=(0.8, 1.25), ratio=(0.67, 1.5)),
     #transforms.RandomResizedCrop(48),
     #transforms.ColorJitter(0.1, 0.1, 0.1),
-    transforms.RandomHorizontalFlip(),
+    #transforms.RandomHorizontalFlip(),
+    transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
     #brightness (float) – How much to jitter brightness. brightness_factor is chosen uniformly from [max(0, 1 - brightness), 1 + brightness].
     #contrast (float) – How much to jitter contrast. contrast_factor is chosen uniformly from [max(0, 1 - contrast), 1 + contrast].
     #saturation (float) – How much to jitter saturation. saturation_factor is chosen uniformly from [max(0, 1 - saturation), 1 + saturation].
@@ -32,10 +33,12 @@ data_transforms = transforms.Compose([
 
 
 val_transforms = transforms.Compose([
-    #transforms.Scale(254),
+    transforms.Scale(336),
     #transforms.Scale(224),
     # LC Method
     transforms.CenterCrop(224),
+    #transforms.Scale(224),
+    #transforms.Scale(224),
     #transforms.RandomAffine(degrees=5, translate=(0.1, 0.1), scale=(0.9, 1.1)),
     #transforms.RandomResizedCrop(48, scale=(0.9, 1), ratio=(0.8, 1.25)),
     #transforms.RandomResizedCrop(48),

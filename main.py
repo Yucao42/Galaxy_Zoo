@@ -9,6 +9,7 @@ from torch.autograd import Variable
 from datetime import datetime as dt
 import numpy as np
 from nets.resnet import partial_nll
+from custom import OptimisedDivGalaxyOutputLayer 
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GTSRB example')
@@ -95,10 +96,12 @@ optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, we
 scheduler = optim.lr_scheduler.StepLR(optimizer, args.step)
 least_mse = np.inf
 
+normalizer = OptimisedDivGalaxyOutputLayer() 
 kl_func = nn.KLDivLoss()
 epi = 1e-9
 
-use_kl = False
+use_kl =True
+dual_custom = True
 
 # Scale factor to the first question
 sf = 1
@@ -115,28 +118,43 @@ def train(epoch):
         data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
-        cls_res = output[:, :3]
-        cls_gts = target[:, :3]
-        if not  use_kl:
-            loss_1 = sf * F.mse_loss(cls_gts, cls_res)
+        if dual_custom:
+            cls_res = normalizer.answer_probabilities(output)
+            cls_gts = normalizer.answer_probabilities(target)
+            #loss_1 = 0.01 * kl_func(cls_res.log(), cls_gts)
+            loss_1 = F.mse_loss(cls_gts, cls_res)
             loss_2 =  F.mse_loss(output, target)
             loss = loss_1 + loss_2
+            #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
+            loss.backward()
+            optimizer.step()
+            loss_total += float(loss_2.item())
+            loss_step  += float(loss.item()) 
+        elif not  use_kl:
+            cls_res = output[:, :3] + 1e-10
+            cls_gts = target[:, :3] + 1e-10
+            #loss_1 = sf * F.mse_loss(cls_gts, cls_res)
+            loss_1 = 0.01 * kl_func(cls_res.log(), cls_gts)
+            loss_2 =  F.mse_loss(output, target)
+            loss = loss_1 + loss_2
+            #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
+            loss.backward()
+            optimizer.step()
+            loss_total += float(loss_2.item())
+            loss_step  += float(loss.item())
         else:
-            prob = output[:, :3] / (output[:, :3].sum(dim=1).reshape(-1, 1) + epi)
-            p_gt = target[:, :3] / (target[:, :3].sum(dim=1).reshape(-1, 1) + epi)
-            prob[prob==0] = 1e-9
-            p_gt[p_gt==0] = 1e-9
-            loss = F.mse_loss(output, target) + 0.1 * kl_func(prob.log().float(), p_gt)
-        #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
-        loss.backward()
-        optimizer.step()
-        loss_total += float(loss_2.item())
-        loss_step  += float(loss.item())
+            #loss =  kl_func((output+epi).log(), target+epi)
+            loss =  F.mse_loss(output, target)
+            #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
+            loss.backward()
+            optimizer.step()
+            loss_total += float(loss.item())
+            loss_step  += float(loss.item())
 
         if batch_idx % args.log_interval == 0 and batch_idx != 0:
             print(dt.now(), 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} '.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss_step / (args.log_interval ) ))
+                100. * batch_idx / len(train_loader), np.sqrt(loss_step / (args.log_interval ) )))
             loss_step = 0
 
     print("\nTraining MSE loss: ", np.sqrt(loss_total * 1.0 / len(train_loader)))

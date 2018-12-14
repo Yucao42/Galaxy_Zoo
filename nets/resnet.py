@@ -176,6 +176,7 @@ class ResNet(nn.Module):
             x = self.optimized_output.predictions(x) 
         elif self.sigmoid:
             x = self.score(x)
+            x = self.optimized_output.predictions(x) 
         else:
             x = torch.clamp(x, 0, 1)
         return x
@@ -187,7 +188,7 @@ def resnet18(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], dp=0.1,  **kwargs)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], dp=0.0,  **kwargs)
     if pretrained:
         try:
             model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))

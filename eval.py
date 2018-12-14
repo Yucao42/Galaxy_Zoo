@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser(description='Galaxy ZOO')
 parser.add_argument('--name', type=str, default='resnet50.csv')
 parser.add_argument('--load', type=str)
 parser.add_argument('--optimized', action="store_true", default=True)
+parser.add_argument('--sigmoid', action="store_true", default=True)
 
 args = parser.parse_args()
 print(args)
@@ -41,7 +42,7 @@ if 'resnet50' in args.name:
 elif 'resnet101' in args.name:
     model = resnet.resnet101()
 elif 'resnet18' in args.name:
-    model = resnet.resnet18()
+    model = resnet.resnet18(sigmoid=args.sigmoid)
 elif 'resnet34' in args.name:
     model = resnet.resnet34()
 elif 'vgg16_bn' in args.name:
