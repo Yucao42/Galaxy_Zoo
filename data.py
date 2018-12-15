@@ -33,8 +33,8 @@ data_transforms = transforms.Compose([
 
 
 val_transforms = transforms.Compose([
+    #transforms.Scale(284),
     transforms.Scale(336),
-    #transforms.Scale(224),
     # LC Method
     transforms.CenterCrop(224),
     #transforms.Scale(224),

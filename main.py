@@ -124,7 +124,7 @@ def train(epoch):
             #loss_1 = 0.01 * kl_func(cls_res.log(), cls_gts)
             loss_1 = F.mse_loss(cls_gts, cls_res)
             loss_2 =  F.mse_loss(output, target)
-            loss = loss_1 + loss_2
+            loss = loss_1 + 2 * loss_2
             #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
             loss.backward()
             optimizer.step()
