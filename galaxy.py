@@ -90,7 +90,8 @@ class GalaxyZooDataset(data.Dataset):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(image)
             if self.rotate:
-                degree = 45 * randint(0, 7)
+                #degree = 45 * randint(0, 7)
+                degree = 45.0 / 2  * randint(0, 15)
                 image = rotate(image, degree)
             image = self.transform(image)
         except:
