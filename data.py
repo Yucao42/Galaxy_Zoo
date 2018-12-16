@@ -10,17 +10,18 @@ import torchvision.transforms as transforms
 # the training set
 data_transforms = transforms.Compose([
     #transforms.Scale(330),
-    #transforms.CenterCrop(330),
+    transforms.CenterCrop(330),
 
     #transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-    transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
+    #transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
+    #transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
     #transforms.RandomResizedCrop(48, ratio=(0.8, 1.25)),
 
     transforms.RandomResizedCrop(224, scale=(0.8, 1.25), ratio=(0.67, 1.5)),
     #transforms.RandomResizedCrop(48),
     #transforms.ColorJitter(0.1, 0.1, 0.1),
-    #transforms.RandomHorizontalFlip(),
-    transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
+    transforms.RandomHorizontalFlip(),
+    #transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
     #brightness (float) – How much to jitter brightness. brightness_factor is chosen uniformly from [max(0, 1 - brightness), 1 + brightness].
     #contrast (float) – How much to jitter contrast. contrast_factor is chosen uniformly from [max(0, 1 - contrast), 1 + contrast].
     #saturation (float) – How much to jitter saturation. saturation_factor is chosen uniformly from [max(0, 1 - saturation), 1 + saturation].

@@ -1,7 +1,7 @@
 set -x
 #MODEL="resnet50_normalized_1111_dpdp"
 #MODEL="resnet18_64_fine_long_sf"
-MODEL="resnet18_64_fine_32"
+MODEL="resnet18_64_fine_discrete_rotation"
 
 python3 eval.py  \
 --name ${MODEL}  \
