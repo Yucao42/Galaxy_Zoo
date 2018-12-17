@@ -75,7 +75,7 @@ def validation(output_file, val_loader):
 
     print(dt.now(), 'Done. ')
 
-for degree in range(320, 340):
+for degree in range(315, 336):
 
     output_file = open('./results/' + args.name + "_{}".format(degree), "w")
     val_data = GalaxyZooDataset(train=False, transform=make_val_transforms(degree))

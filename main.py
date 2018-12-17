@@ -71,7 +71,7 @@ if 'resnet50' in args.name:
 elif 'resnet101' in args.name:
     model = resnet.resnet101(True)
 elif 'resnet18' in args.name:
-    model = resnet.resnet18(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid)
+    model = resnet.resnet18(True, dp=args.p, lock_bn=args.lock_bn, sigmoid=args.sigmoid)
 elif 'resnet34' in args.name:
     model = resnet.resnet34(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid)
 elif 'vgg16_bn' in args.name:
@@ -102,7 +102,7 @@ epi = 1e-9
 
 use_kl = True
 dual_custom = True
-focal_mse = True
+focal_mse = False
 
 # Scale factor to the first question
 sf = 1
