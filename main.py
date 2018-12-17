@@ -100,9 +100,9 @@ normalizer = OptimisedDivGalaxyOutputLayer()
 kl_func = nn.KLDivLoss()
 epi = 1e-9
 
-use_kl =False
+use_kl = True
 dual_custom = True
-focal_mse = False
+focal_mse = True
 
 # Scale factor to the first question
 sf = 1
@@ -145,7 +145,8 @@ def train(epoch):
             #loss_1 = 0.01 * kl_func(cls_res.log(), cls_gts)
             loss_1 = F.mse_loss(cls_gts, cls_res)
             loss_2 =  F.mse_loss(output, target)
-            loss = loss_1 + 2 * loss_2
+            loss = loss_1 + 3 * loss_2
+            #loss = loss_1 + 2 * loss_2
             #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
             loss.backward()
             optimizer.step()
@@ -178,7 +179,7 @@ def train(epoch):
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), np.sqrt(loss_step / (args.log_interval ) )))
             loss_step = 0
-            if focal_mse and batch_idx % 300 == 0:
+            if focal_mse and batch_idx % 900 == 0:
                 wts = Variable(wts_step.mean(dim=0).reshape(-1), requires_grad=False)
                 wts_step = wts.reshape(1, -1)
                 wts_step, wts = wts_step.cuda(), wts.cuda()
