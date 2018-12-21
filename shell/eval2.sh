@@ -3,7 +3,7 @@ set -x
 #MODEL="resnet18_64_fine_long_sf"
 
 #MODEL="resnet50_normalized_1111finetune_dpdp_finetune4111"
-MODEL="resnet18_64_fine_discrete_rotation_sc_3"
+MODEL="resnet18_64_fine"
 
 
 python3 eval.py  \

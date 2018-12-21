@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
 #SBATCH --time=2:00:00
-#SBATCH --mem=16GB
+#SBATCH --mem=20GB
 #SBATCH --job-name=eval
 #SBATCH --mail-type=END
 #SBATCH --mail-user=yc3390nyu.edu
@@ -11,8 +11,8 @@
 #SBATCH --error=hpc_outputs/slurm_%j.err 
 #SBATCH --gres=gpu:1
 
-cd /home/yc3390/project/galaxy/code/galaxy_res
+cd /home/yc3390/project/galaxy/code/EVAL/Galaxy_Zoo
 module purge
 
-source activate galaxy1
+source activate galaxy2
 bash shell/eval.sh

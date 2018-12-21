@@ -24,30 +24,56 @@ def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
 
-def partial_nll(scores, target):
-    '''First 3 answers sums up to 1, use a negative log likelihood loss to correct it further.
-    '''
-    epi = 1e-12
-    probs = scores[:, :3] 
-    #probs = scores[:, :3] / (socres[:, :3].sum(dim=1) + epi)
-    g_t = target[:, :3]
-    return F.nll_loss(probs, g_t) 
+class shaper(nn.Module):
+    def __init__(self, channels=8, to_groupy=False):
+        super(BasicBlock, self).__init__()
+        self.to_groupy = to_groupy
+        self.channels = channels
+
+    def forward(self, x):
+        if self.to_groupy:
+            x = x.view(xs[0], xs[1] // channels, channels, x.size()[2], x.size()[3])
+        else:
+            x = x.view(xs[0], xs[1] * xs[2], xs[3], xs[4])
+        return x
+
+class groupy_bn(nn.Module):
+    def __init__(self, batch_channels, channels=8):
+        super(BasicBlock, self).__init__()
+        self.bn = nn.BatchNorm2d(channels)
+
+    def forward(self, x):
+        xs = x.size()
+        x = x.view(xs[0], xs[1] * xs[2], xs[3], xs[4])
+        x = self.bn(x)
+
+        xs = x.size()
+        x = x.view(xs[0], xs[1] // channels, channels, xs()[2], xs()[3])
+        # x = x.view(xs[0], xs[1], xs[2], x.size()[2], x.size()[3])
+        return x
+
 
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, stride=1, channels=8, downsample=None):
         super(BasicBlock, self).__init__()
-        self.conv1 = conv3x3(inplanes, planes, stride)
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.to_groupy = shaper(True)
+        self.to_normal = shaper(False)
+        self.conv1 = P4MConvZ2(inplanes, planes//channels, kernel_size=3, stride=stride)
+        #self.conv1 = conv3x3(inplanes, planes, stride)
+        self.bn1 = groupy_bn(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(planes, planes)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv2 = P4MConvZ2(planes//channels, planes//channels, kernel_size=3, stride=stride)
+        #self.conv2 = conv3x3(planes, planes)
+        #self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = groupy_bn(planes)
         self.downsample = downsample
         self.stride = stride
 
     def forward(self, x):
         residual = x
+        x = self.to_groupy(x)
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -55,6 +81,7 @@ class BasicBlock(nn.Module):
 
         out = self.conv2(out)
         out = self.bn2(out)
+        out = self.to_normal(out)
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -64,49 +91,11 @@ class BasicBlock(nn.Module):
 
         return out
 
-
-class Bottleneck(nn.Module):
-    expansion = 4
-
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
-                               padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, planes * self.expansion, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * self.expansion)
-        self.relu = nn.ReLU(inplace=True)
-        self.downsample = downsample
-        self.stride = stride
-
-    def forward(self, x):
-        residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
-
-        if self.downsample is not None:
-            residual = self.downsample(x)
-
-        out += residual
-        out = self.relu(out)
-
-        return out
 
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False, sigmoid=False, optimized=False):
+    def __init__(self, block, layers, mid_layer=500, num_classes=37, dp=0.5, lock_bn=False, sigmoid=False, optimized=True):
         self.inplanes = 64
         self.optimized = optimized
         self.dp = dp
@@ -169,6 +158,8 @@ class ResNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = F.dropout(x, p=self.dp, training=self.training)
         x = self.relu(self.fc1(x))
+        ### Double Dropout
+        x = F.dropout(x, p=self.dp, training=self.training)
         x = self.fc2(x)
 
         if self.optimized:
@@ -176,18 +167,19 @@ class ResNet(nn.Module):
             x = self.optimized_output.predictions(x) 
         elif self.sigmoid:
             x = self.score(x)
+            x = self.optimized_output.predictions(x) 
         else:
             x = torch.clamp(x, 0, 1)
         return x
 
 
-def resnet18(pretrained=False, **kwargs):
+def resnet18(pretrained=False, dp=0.0, **kwargs):
     """Constructs a ResNet-18 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], dp=0.1,  **kwargs)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], dp=dp,  **kwargs)
     if pretrained:
         try:
             model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
@@ -213,13 +205,13 @@ def resnet34(pretrained=False, **kwargs):
     return model
 
 
-def resnet50(pretrained=False, **kwargs):
+def resnet50(pretrained=False,dp=0.2, **kwargs):
     """Constructs a ResNet-50 model.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    model = ResNet(Bottleneck, [3, 4, 6, 3],dp=dp, **kwargs)
     state_dict = model.state_dict()
     if pretrained:
         try:

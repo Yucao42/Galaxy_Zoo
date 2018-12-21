@@ -13,7 +13,7 @@ data_transforms = transforms.Compose([
     transforms.CenterCrop(336),
 
     #transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-    #transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
+    transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
     #transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
     #transforms.RandomResizedCrop(48, ratio=(0.8, 1.25)),
 
@@ -26,7 +26,7 @@ data_transforms = transforms.Compose([
     #contrast (float) – How much to jitter contrast. contrast_factor is chosen uniformly from [max(0, 1 - contrast), 1 + contrast].
     #saturation (float) – How much to jitter saturation. saturation_factor is chosen uniformly from [max(0, 1 - saturation), 1 + saturation].
     #hue (float) – How much to jitter hue. hue_factor is chosen uniformly from [-hue, hue]
-    transforms.ColorJitter(0.3, 0.1, 0.1, 0.1),
+    transforms.ColorJitter(0.5, 0.1, 0.1, 0.1),
 
     transforms.ToTensor(),
     transforms.Normalize((0.3337, 0.3064, 0.3171), ( 0.2672, 0.2564, 0.2629))
@@ -51,7 +51,7 @@ def make_val_transforms(degree):
 
 val_transforms = transforms.Compose([
     #transforms.Scale(284),
-    transforms.Scale(320),
+    transforms.Scale(300),
     # LC Method
     transforms.CenterCrop(224),
     #transforms.Scale(224),

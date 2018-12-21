@@ -67,7 +67,7 @@ from nets import vgg
 from nets import alexnet
 
 if 'resnet50' in args.name:
-    model = resnet.resnet50(True, lock_bn=args.lock_bn, sigmoid=args.sigmoid, optimized=args.optimized)
+    model = resnet.resnet50(True, lock_bn=args.lock_bn, dp=args.p, sigmoid=args.sigmoid, optimized=args.optimized)
 elif 'resnet101' in args.name:
     model = resnet.resnet101(True)
 elif 'resnet18' in args.name:
@@ -100,8 +100,8 @@ normalizer = OptimisedDivGalaxyOutputLayer()
 kl_func = nn.KLDivLoss()
 epi = 1e-9
 
-use_kl = True
-dual_custom = True
+use_kl = False
+dual_custom = False
 focal_mse = False
 
 # Scale factor to the first question
@@ -167,7 +167,7 @@ def train(epoch):
         else:
             #loss =  kl_func((output+epi).log(), target+epi)
 
-            loss =  F.l1_loss(output, target)
+            loss =  F.mse_loss(output, target)
             #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
             loss.backward()
             optimizer.step()

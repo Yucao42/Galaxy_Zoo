@@ -5,10 +5,11 @@ import pickle
 import numpy as np
 import torch.utils.data as data
 from PIL import Image
+import torchvision
 from random import randint
 import math
-from torchvision.transforms.functional import rotate
 from torch.utils.data import DataLoader
+from torchvision.transforms.functional import rotate
 
 INPUTSIZE = (224, 224)
 
@@ -19,11 +20,9 @@ class GalaxyZooDataset(data.Dataset):
         'train_probs' :  '/scratch/yc3390/project/galaxy/data/all/training_solutions.pkl',
     }
 
-    def __init__(self, train=True, transform=None, rotate=True,degree=0):
+    def __init__(self, train=True, transform=None):
         self.train = train
         self.transform = transform
-        self.rotate = rotate
-        self.degree = degree
 
         # Prepare dataset
         self.training_set = pickle.load(open(self.dataset_paths['train_images'], 'rb'))
@@ -76,6 +75,7 @@ class GalaxyZooDataset(data.Dataset):
         meta = {}
         pic = ''
         name = 0
+        images = []
 
         if(self.train):
             name = self.training_keys[index]
@@ -90,13 +90,10 @@ class GalaxyZooDataset(data.Dataset):
             image = cv2.imread(pic)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(image)
-            #if self.rotate:
-            #    degree = 45 * randint(0, 7)
-            #    #degree = 45.0 / 2  * randint(0, 15)
-            #    image = rotate(image, degree)
-            if self.degree:
-                image = rotate(image, self.degree)
-            image = self.transform(image)
+            for i in range(15):
+                images.append(self.transform(rotate(image, i * 22.5)))
+            image = torch.cat(images)
+            #image = self.transform(image)
         except:
             print('Error in loading image ', pic)
 
@@ -116,21 +113,23 @@ if __name__ == '__main__':
     train_transform = transforms.Compose([
                                     # transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
                                     # transforms.RandomResizedCrop(args.input_size),
-                                    transforms.Resize((224, 224)),
+                                    transforms.Resize(336),
                                     # transforms.RandomHorizontalFlip(),
-                                    transforms.ToTensor(),
+                                    transforms.TenCrop((224,224)),
+                                    torchvision.transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops]))
+                                    #transforms.ToTensor(),
                                     #transforms.Normalize(mean=imagenet_mean, std=imagenet_std)
                                     ])
 
     train_data = GalaxyZooDataset(train=False, transform=train_transform)
-    train_loader = DataLoader(train_data, batch_size=64, shuffle=False,
+    train_loader = DataLoader(train_data, batch_size=8, shuffle=False,
                                   num_workers=8, pin_memory=True, collate_fn=train_data.collate)
     import cv2
     print(len(train_loader))
     for batch_idx, meta in enumerate(train_loader):
         try:
             print('Nice a there is no error', meta['image'].shape, meta['prob'].shape, batch_idx)
-            print(meta['name'])
+            #print(meta['name'])
         except:
             print(meta['name'])
     print('Finished! ')
