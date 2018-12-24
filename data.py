@@ -9,23 +9,54 @@ import torchvision.transforms as transforms
 # and normalize them to mean = 0 and standard-deviation = 1 based on statistics collected from
 # the training set
 data_transforms = transforms.Compose([
+    #transforms.Scale(330),
+    transforms.CenterCrop(336),
 
     #transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-    transforms.RandomAffine(degrees=360, translate=(0.2, 0.2), scale=(0.9, 1.1)),
+    transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
+    #transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
+
     #transforms.RandomResizedCrop(48, ratio=(0.8, 1.25)),
 
-    transforms.RandomResizedCrop(48, scale=(0.9, 1), ratio=(0.8, 1.25)),
+    transforms.RandomResizedCrop(224, scale=(0.8, 1.25), ratio=(0.67, 1.5)),
     #transforms.RandomResizedCrop(48),
     #transforms.ColorJitter(0.1, 0.1, 0.1),
-    transforms.ColorJitter(0.3, 0.3, 0.3, 0.3),
+    transforms.RandomHorizontalFlip(),
+    #transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
+    #brightness (float) – How much to jitter brightness. brightness_factor is chosen uniformly from [max(0, 1 - brightness), 1 + brightness].
+    #contrast (float) – How much to jitter contrast. contrast_factor is chosen uniformly from [max(0, 1 - contrast), 1 + contrast].
+    #saturation (float) – How much to jitter saturation. saturation_factor is chosen uniformly from [max(0, 1 - saturation), 1 + saturation].
+    #hue (float) – How much to jitter hue. hue_factor is chosen uniformly from [-hue, hue]
+    transforms.ColorJitter(0.5, 0.1, 0.1, 0.1),
 
     transforms.ToTensor(),
     transforms.Normalize((0.3337, 0.3064, 0.3171), ( 0.2672, 0.2564, 0.2629))
 ])
 
+def make_val_transforms(degree):
+    val_transforms = transforms.Compose([
+        #transforms.Scale(284),
+        transforms.Scale(degree),
+        # LC Method
+        transforms.CenterCrop(224),
+        #transforms.Scale(224),
+        #transforms.Scale(224),
+        #transforms.RandomAffine(degrees=5, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+        #transforms.RandomResizedCrop(48, scale=(0.9, 1), ratio=(0.8, 1.25)),
+        #transforms.RandomResizedCrop(48),
+        #transforms.ColorJitter(0.1, 0., 0.),
+        transforms.ToTensor(),
+        transforms.Normalize((0.3337, 0.3064, 0.3171), ( 0.2672, 0.2564, 0.2629))
+    ])
+    return val_transforms
 
 val_transforms = transforms.Compose([
-    transforms.Scale((48, 48)),
+    #transforms.Scale(284),
+    transforms.Scale(300),
+    # LC Method
+    transforms.CenterCrop(224),
+    #transforms.Scale(224),
+    #transforms.Scale(224),
     #transforms.RandomAffine(degrees=5, translate=(0.1, 0.1), scale=(0.9, 1.1)),
     #transforms.RandomResizedCrop(48, scale=(0.9, 1), ratio=(0.8, 1.25)),
     #transforms.RandomResizedCrop(48),
@@ -33,37 +64,3 @@ val_transforms = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.3337, 0.3064, 0.3171), ( 0.2672, 0.2564, 0.2629))
 ])
-
-def initialize_data(folder):
-    train_zip = folder + '/train_images.zip'
-    test_zip = folder + '/test_images.zip'
-    if not os.path.exists(train_zip) or not os.path.exists(test_zip):
-        raise(RuntimeError("Could not find " + train_zip + " and " + test_zip
-              + ', please download them from https://www.kaggle.com/c/nyu-cv-fall-2017/data '))
-    # extract train_data.zip to train_data
-    train_folder = folder + '/train_images'
-    if not os.path.isdir(train_folder):
-        print(train_folder + ' not found, extracting ' + train_zip)
-        zip_ref = zipfile.ZipFile(train_zip, 'r')
-        zip_ref.extractall(folder)
-        zip_ref.close()
-    # extract test_data.zip to test_data
-    test_folder = folder + '/test_images'
-    if not os.path.isdir(test_folder):
-        print(test_folder + ' not found, extracting ' + test_zip)
-        zip_ref = zipfile.ZipFile(test_zip, 'r')
-        zip_ref.extractall(folder)
-        zip_ref.close()
-
-    # make validation_data by using images 00000*, 00001* and 00002* in each class
-    val_folder = folder + '/val_images'
-    if not os.path.isdir(val_folder):
-        print(val_folder + ' not found, making a validation set')
-        os.mkdir(val_folder)
-        for dirs in os.listdir(train_folder):
-            if dirs.startswith('000'):
-                os.mkdir(val_folder + '/' + dirs)
-                for f in os.listdir(train_folder + '/' + dirs):
-                    if f.startswith('00000') or f.startswith('00001') or f.startswith('00002'):
-                        # move file to validation folder
-                        os.rename(train_folder + '/' + dirs + '/' + f, val_folder + '/' + dirs + '/' + f)

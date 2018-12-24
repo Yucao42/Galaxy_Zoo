@@ -7,6 +7,7 @@ import torch.utils.data as data
 from PIL import Image
 from random import randint
 import math
+from torchvision.transforms.functional import rotate
 from torch.utils.data import DataLoader
 
 INPUTSIZE = (224, 224)
@@ -18,9 +19,11 @@ class GalaxyZooDataset(data.Dataset):
         'train_probs' :  '/scratch/yc3390/project/galaxy/data/all/training_solutions.pkl',
     }
 
-    def __init__(self, train=True, transform=None):
+    def __init__(self, train=True, transform=None, rotate=True,degree=0):
         self.train = train
         self.transform = transform
+        self.rotate = rotate
+        self.degree = degree
 
         # Prepare dataset
         self.training_set = pickle.load(open(self.dataset_paths['train_images'], 'rb'))
@@ -87,6 +90,12 @@ class GalaxyZooDataset(data.Dataset):
             image = cv2.imread(pic)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(image)
+            #if self.rotate:
+            #    degree = 45 * randint(0, 7)
+            #    #degree = 45.0 / 2  * randint(0, 15)
+            #    image = rotate(image, degree)
+            if self.degree:
+                image = rotate(image, self.degree)
             image = self.transform(image)
         except:
             print('Error in loading image ', pic)
