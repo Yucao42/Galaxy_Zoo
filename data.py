@@ -15,6 +15,7 @@ data_transforms = transforms.Compose([
     #transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
     transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
     #transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
+
     #transforms.RandomResizedCrop(48, ratio=(0.8, 1.25)),
 
     transforms.RandomResizedCrop(224, scale=(0.8, 1.25), ratio=(0.67, 1.5)),
