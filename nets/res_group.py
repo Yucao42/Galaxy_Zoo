@@ -26,21 +26,23 @@ def conv3x3(in_planes, out_planes, stride=1):
 
 class shaper(nn.Module):
     def __init__(self, channels=8, to_groupy=False):
-        super(BasicBlock, self).__init__()
+        super(shaper, self).__init__()
         self.to_groupy = to_groupy
         self.channels = channels
 
     def forward(self, x):
+        xs = x.size()
         if self.to_groupy:
-            x = x.view(xs[0], xs[1] // channels, channels, x.size()[2], x.size()[3])
+            x = x.view(xs[0], xs[1] // self.channels, self.channels, xs[2], xs[3])
         else:
             x = x.view(xs[0], xs[1] * xs[2], xs[3], xs[4])
         return x
 
 class groupy_bn(nn.Module):
     def __init__(self, batch_channels, channels=8):
-        super(BasicBlock, self).__init__()
-        self.bn = nn.BatchNorm2d(channels)
+        super(groupy_bn, self).__init__()
+        self.bn = nn.BatchNorm2d(batch_channels)
+        self.channels = channels
 
     def forward(self, x):
         xs = x.size()
@@ -48,7 +50,7 @@ class groupy_bn(nn.Module):
         x = self.bn(x)
 
         xs = x.size()
-        x = x.view(xs[0], xs[1] // channels, channels, xs()[2], xs()[3])
+        x = x.view(xs[0], xs[1] // self.channels, self.channels, xs[2], xs[3])
         # x = x.view(xs[0], xs[1], xs[2], x.size()[2], x.size()[3])
         return x
 
@@ -58,13 +60,14 @@ class BasicBlock(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1, channels=8, downsample=None):
         super(BasicBlock, self).__init__()
-        self.to_groupy = shaper(True)
-        self.to_normal = shaper(False)
-        self.conv1 = P4MConvZ2(inplanes, planes//channels, kernel_size=3, stride=stride)
+        self.to_groupy = shaper(to_groupy=True)
+        self.to_normal = shaper(to_groupy=False)
+        self.channels = channels
+        self.conv1 = P4MConvP4M(inplanes//self.channels, planes//self.channels, kernel_size=3, stride=stride,padding=1)
         #self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = groupy_bn(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = P4MConvZ2(planes//channels, planes//channels, kernel_size=3, stride=stride)
+        self.conv2 = P4MConvP4M(planes//channels, planes//channels, kernel_size=3, stride=1,padding=1)
         #self.conv2 = conv3x3(planes, planes)
         #self.bn2 = nn.BatchNorm2d(planes)
         self.bn2 = groupy_bn(planes)
@@ -73,6 +76,7 @@ class BasicBlock(nn.Module):
 
     def forward(self, x):
         residual = x
+        #print("res ", residual.shape)
         x = self.to_groupy(x)
 
         out = self.conv1(x)
@@ -84,8 +88,10 @@ class BasicBlock(nn.Module):
         out = self.to_normal(out)
 
         if self.downsample is not None:
-            residual = self.downsample(x)
+            #print('before downsample ', residual.shape)
+            residual = self.downsample(residual)
 
+        #print('out ',out.shape, " res ", residual.shape)
         out += residual
         out = self.relu(out)
 
@@ -105,12 +111,12 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+        self.layer1 = self._make_layer(block, 2* 64, layers[0])
+        self.layer2 = self._make_layer(block, 2* 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 2* 256, layers[2], stride=2)
+        self.layer4 = self._make_layer(block, 2* 512, layers[3], stride=2)
         self.avgpool = nn.AvgPool2d(7, stride=1)
-        self.fc1 = nn.Linear(512 * block.expansion, mid_layer)
+        self.fc1 = nn.Linear(512 *2 * block.expansion, mid_layer)
         self.fc2 = nn.Linear(mid_layer, num_classes)
         self.score = nn.Sigmoid()
         self.sigmoid = sigmoid
@@ -136,7 +142,7 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers.append(block(self.inplanes, planes, stride, downsample=downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes))
@@ -150,6 +156,7 @@ class ResNet(nn.Module):
         x = self.maxpool(x)
 
         x = self.layer1(x)
+        #print(x.size)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)

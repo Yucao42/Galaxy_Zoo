@@ -62,7 +62,7 @@ train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True,
 # We define neural net in model.py so that it can be reused by the evaluate.py script
 #from model_dnn import Net
 from paper_2stn import Net
-from nets import resnet
+from nets import res_group as resnet
 from nets import vgg
 from nets import alexnet
 
