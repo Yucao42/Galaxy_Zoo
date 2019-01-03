@@ -15,4 +15,4 @@ cd /home/yc3390/project/galaxy/code/EVAL/Galaxy_Zoo
 module purge
 
 source activate galaxy2
-bash shell/eval2.sh
+bash shell/eval1.sh

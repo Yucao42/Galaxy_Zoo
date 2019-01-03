@@ -101,7 +101,7 @@ kl_func = nn.KLDivLoss()
 epi = 1e-9
 
 use_kl = False
-dual_custom = False
+dual_custom = True
 focal_mse = False
 
 # Scale factor to the first question

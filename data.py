@@ -13,9 +13,8 @@ data_transforms = transforms.Compose([
     transforms.CenterCrop(336),
 
     #transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-    transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
+    #transforms.RandomAffine(degrees=360, translate=(0.1, 0.1), scale=(0.67, 1.5)),
     #transforms.RandomChoice([transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip()]),
-
     #transforms.RandomResizedCrop(48, ratio=(0.8, 1.25)),
 
     transforms.RandomResizedCrop(224, scale=(0.8, 1.25), ratio=(0.67, 1.5)),
@@ -51,8 +50,8 @@ def make_val_transforms(degree):
     return val_transforms
 
 val_transforms = transforms.Compose([
-    #transforms.Scale(284),
-    transforms.Scale(300),
+    transforms.Scale(288),
+    #transforms.Scale(300),
     # LC Method
     transforms.CenterCrop(224),
     #transforms.Scale(224),
