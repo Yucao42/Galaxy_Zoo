@@ -1,5 +1,5 @@
 set -x
-MODEL="resnet18_grpy_2_V100"
+MODEL="resnet18_DUAL"
 
 mkdir -p models/resnet/${MODEL}
 #cp shell/train.sh models/${MODEL}/
@@ -7,10 +7,10 @@ mkdir -p models/resnet/${MODEL}
 python3 main.py  \
 --name ${MODEL}  \
 --batch_size 64 \
---step 18 \
---epochs 80 \
---lr 4e-2 \
---p 0.0 \
+--step 40 \
+--epochs 150 \
+--lr 3e-2 \
+--p 0.2 \
 --weight_decay 5e-4  \
 --optimized \
 --momentum 0.9  \

@@ -9,7 +9,7 @@ from torch.autograd import Variable
 from datetime import datetime as dt
 import numpy as np
 from nets.resnet import partial_nll
-from custom import OptimisedDivGalaxyOutputLayer 
+from custom import OptimisedDivGalaxyOutputLayer, ce_loss
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GTSRB example')
@@ -62,7 +62,7 @@ train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True,
 # We define neural net in model.py so that it can be reused by the evaluate.py script
 #from model_dnn import Net
 from paper_2stn import Net
-from nets import res_group as resnet
+from nets import resnet
 from nets import vgg
 from nets import alexnet
 
@@ -100,9 +100,13 @@ normalizer = OptimisedDivGalaxyOutputLayer()
 kl_func = nn.KLDivLoss()
 epi = 1e-9
 
-use_kl = False
-dual_custom = False
+
+kl_custom = True
+dual_custom = True
 focal_mse = False
+use_kl = True
+ce_func = ce_loss()
+print('Training Options: \n' + 'kl_custom: {}\ndual_custom: {}\nfocal_mse: {}\nuse_kl: {}\n'.format(kl_custom, dual_custom, focal_mse, use_kl))
 
 # Scale factor to the first question
 sf = 1
@@ -139,13 +143,30 @@ def train(epoch):
             optimizer.step()
             loss_total += float(loss.item())
             loss_step  += float(loss.item())
+        elif kl_custom:
+            cls_res = normalizer.answer_probabilities(output) + 1e-10
+            cls_gts = normalizer.answer_probabilities(target) + 1e-10
+            loss_1 = 0.01 *( kl_func(cls_res.log(), cls_gts)+ ce_func(cls_res, cls_gts))
+            #loss_1 = F.mse_loss(cls_gts, cls_res)
+            loss_2 =  F.mse_loss(output, target)
+            loss = loss_1 + loss_2
+            #loss = loss_1 * 3  + 1 * loss_2
+            #loss = loss_1 + 2 * loss_2
+            #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
+            loss.backward()
+            optimizer.step()
+            loss_total += float(loss_2.item())
+            loss_step  += float(loss.item()) 
         elif dual_custom:
             cls_res = normalizer.answer_probabilities(output)
             cls_gts = normalizer.answer_probabilities(target)
             #loss_1 = 0.01 * kl_func(cls_res.log(), cls_gts)
             loss_1 = F.mse_loss(cls_gts, cls_res)
             loss_2 =  F.mse_loss(output, target)
-            loss = loss_1 + 3 * loss_2
+            with torch.no_grad():
+                alpha = loss_2 / (loss_1 + 1e-12)
+            loss = 0.5 * loss_1 * alpha + 0.5 * loss_2
+            #loss = loss_1 * 3  + 1 * loss_2
             #loss = loss_1 + 2 * loss_2
             #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
             loss.backward()
@@ -158,7 +179,10 @@ def train(epoch):
             #loss_1 = sf * F.mse_loss(cls_gts, cls_res)
             loss_1 = 0.01 * kl_func(cls_res.log(), cls_gts)
             loss_2 =  F.mse_loss(output, target)
-            loss = loss_1 + loss_2
+
+            #loss = loss_1 + loss_2
+            loss = loss_1
+
             #loss = F.mse_loss(output, target) + F.kl_div(output[:,:3].float(), target[:,:3])
             loss.backward()
             optimizer.step()

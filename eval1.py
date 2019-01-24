@@ -28,7 +28,7 @@ from torch.utils.data import DataLoader
 val_transforms = transforms.Compose([
                                 # transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
                                 # transforms.RandomResizedCrop(args.input_size),
-                                transforms.Resize(300),
+                                transforms.Resize(336),
                                 # transforms.RandomHorizontalFlip(),
                                 transforms.CenterCrop(224),
                                 #transforms.TenCrop((224,224)),
@@ -46,6 +46,7 @@ val_loader = DataLoader(val_data, batch_size=4, shuffle=False,
 # We define neural net in model.py so that it can be reused by the evaluate.py script
 #from model_dnn import Net
 from paper_2stn import Net
+#from nets import res_group as resnet
 from nets import resnet
 from nets import vgg
 from nets import alexnet
@@ -72,7 +73,7 @@ if args.load:
     print("Load sucessfully !", args.load)
 
 model.to(device)
-output_file = open('./results/' + args.name, "w")
+output_file = open('./results/' + args.name + 'rotated', "w")
 head = 'GalaxyID,Class1.1,Class1.2,Class1.3,Class2.1,Class2.2,Class3.1,Class3.2,Class4.1,Class4.2,Class5.1,Class5.2,Class5.3,Class5.4,Class6.1,Class6.2,Class7.1,Class7.2,Class7.3,Class8.1,Class8.2,Class8.3,Class8.4,Class8.5,Class8.6,Class8.7,Class9.1,Class9.2,Class9.3,Class10.1,Class10.2,Class10.3,Class11.1,Class11.2,Class11.3,Class11.4,Class11.5,Class11.6\n'
 output_file.write(head)
 

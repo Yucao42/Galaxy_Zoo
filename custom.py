@@ -5,6 +5,14 @@ Custom stuff that is specific to the galaxy contest
 import numpy as np
 import torch
 
+class ce_loss(nn.Module):
+    def __init__(self):
+        super(ce_loss, self).__init__()
+
+    def forward(self, pred, label):
+        res = - (pred * label.log()).mean()
+        return res
+
 class OptimisedDivGalaxyOutputLayer(object):
     """
     divisive normalisation, optimised for performance.
